@@ -1,34 +1,69 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
+  HttpException,
   HttpStatus,
   Post,
-  Request,
-  UseGuards,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { AuthGuard } from './auth.guard';
+import { Prisma, User as UserModel } from '@prisma/client';
+import { UserService } from 'src/user/user.service';
+import { Public } from './auth.decorator';
 import { AuthService } from './auth.service';
 
 @Controller()
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private readonly usersService: UserService,
+  ) {}
 
-  @HttpCode(HttpStatus.OK)
-  @Post('login')
-  // signIn(@Body() signInDto: Record<string, any>, @Res() response: Response) {
-  signIn(@Body() signInDto: Record<string, any>) {
-    return this.authService.signIn(
-      signInDto.email,
-      signInDto.password,
-      // response,
-    );
+  @Public()
+  @Post('/signup')
+  async signupUser(
+    @Body() userData: { name?: string; email: string },
+  ): Promise<Omit<UserModel, 'password'>> {
+    try {
+      return await this.usersService.createUser(userData);
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === 'P2002') {
+          throw new HttpException(
+            {
+              message: 'Email already exists',
+            },
+            400,
+          );
+        }
+      }
+    }
   }
 
-  @UseGuards(AuthGuard)
-  @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @Post('login')
+  async signIn(@Body() signInDto: Record<string, any>) {
+    try {
+      return await this.authService.signIn(signInDto.email, signInDto.password);
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError) {
+        if (e.code === 'P2002') {
+          throw new HttpException(
+            {
+              message: 'Email already exists',
+            },
+            400,
+          );
+        }
+      } else if (e instanceof UnauthorizedException) {
+        throw new HttpException(
+          {
+            message: 'Invalid credentials',
+          },
+          401,
+        );
+      }
+    }
   }
 }

@@ -7,10 +7,9 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  Put,
 } from '@nestjs/common';
-import { PostService } from './post.service';
 import { Post as PostModel } from '@prisma/client';
+import { PostService } from './post.service';
 
 @Controller('post')
 export class PostController {
