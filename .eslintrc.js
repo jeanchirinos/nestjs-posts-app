@@ -5,12 +5,6 @@ module.exports = {
     tsconfigRootDir: __dirname,
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint/eslint-plugin'],
-  extends: [
-    'plugin:@typescript-eslint/recommended',
-    'plugin:prettier/recommended',
-    'prettier',
-  ],
   root: true,
   env: {
     node: true,
@@ -18,15 +12,37 @@ module.exports = {
   },
   ignorePatterns: ['.eslintrc.js'],
   rules: {
+    // 'no-unused-vars': 'warn',
+    'prefer-const': 'warn',
+    'no-empty': 'warn',
+    'no-unreachable': 'warn',
+    'spaced-comment': 'warn',
+    camelcase: 'off',
+    'no-console': 'warn',
+    'no-new': 'off',
+    'no-undef-init': 'warn',
+    // 'import/no-duplicates': 'warn',
+    'no-useless-rename': 'warn',
+    'no-return-await': 'off',
+    'no-unneeded-ternary': 'warn',
+
+    //
+    '@typescript-eslint/consistent-type-definitions': 'off',
+    // '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/strict-boolean-expressions': 'off',
+    '@typescript-eslint/promise-function-async': 'off',
+    '@typescript-eslint/no-misused-promises': 'off',
+    '@typescript-eslint/consistent-type-assertions': 'off',
+    // '@typescript-eslint/no-non-null-assertion': 'warn',
+    // '@typescript-eslint/no-unused-vars': 'warn',
+    // '@typescript-eslint/restrict-template-expressions': 'warn',
+    // '@typescript-eslint/array-type': 'warn',
+    // '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
+    // '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+    //
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
   },
-  'prettier/prettier': [
-    'error',
-    {
-      endOfLine: 'auto',
-    },
-  ],
-};
+}
