@@ -2,10 +2,14 @@ import { Body, Controller, HttpException, Post, Request, UseGuards } from '@nest
 import { Prisma, User as UserModel } from '@prisma/client'
 import { UserService } from 'src/user/user.service'
 import { LocalAuthGuard } from './local-auth.guard'
+import { AuthService } from './auth.service'
 
 @Controller()
 export class AuthController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private authService: AuthService,
+  ) {}
 
   @Post('/signup')
   async signupUser(@Body() userData: { name?: string; email: string }): Promise<Omit<UserModel, 'password'>> {
@@ -28,6 +32,6 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   async login(@Request() req) {
-    return req.user
+    return this.authService.login(req.user)
   }
 }
