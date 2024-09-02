@@ -11,7 +11,7 @@ export class AuthController {
     private authService: AuthService,
   ) {}
 
-  @Post('/signup')
+  @Post('signup')
   async signupUser(@Body() userData: { name?: string; email: string }): Promise<Omit<UserModel, 'password'>> {
     try {
       return await this.userService.createUser(userData)
