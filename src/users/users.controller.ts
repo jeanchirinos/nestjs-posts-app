@@ -12,6 +12,10 @@ export class UserController {
   async getProfile(@CurrentUser() user) {
     const profile = await this.usersService.user({ id: user.id })
 
+    if (!profile) {
+      return null
+    }
+
     const { password, ...restData } = profile
 
     return { ...restData }
