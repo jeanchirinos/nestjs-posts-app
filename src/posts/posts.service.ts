@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/prisma.service'
 import { Post, Prisma } from '@prisma/client'
+import { PaginatedResult, PaginateFunction, paginator } from 'src/utils/paginator'
 
 @Injectable()
-export class PostService {
+export class PostsService {
   constructor(private prisma: PrismaService) {}
 
   async post(postWhereUniqueInput: Prisma.PostWhereUniqueInput): Promise<Post | null> {
@@ -18,15 +19,30 @@ export class PostService {
     cursor?: Prisma.PostWhereUniqueInput
     where?: Prisma.PostWhereInput
     orderBy?: Prisma.PostOrderByWithRelationInput
-  }): Promise<Post[]> {
-    const { skip, take, cursor, where, orderBy } = params
-    return this.prisma.post.findMany({
-      skip,
-      take,
-      cursor,
-      where,
-      orderBy,
-    })
+    page?: number
+  }): Promise<PaginatedResult<Post>> {
+    const { skip, take, cursor, where, orderBy, page } = params
+
+    const paginate: PaginateFunction = paginator({ perPage: 10 })
+
+    return paginate(
+      this.prisma.post,
+      {
+        where,
+        orderBy,
+      },
+      {
+        page,
+      },
+    )
+
+    // return this.prisma.post.findMany({
+    //   skip,
+    //   take,
+    //   cursor,
+    //   where,
+    //   orderBy,
+    // })
   }
 
   async createPost(data: Prisma.PostCreateInput): Promise<Post> {

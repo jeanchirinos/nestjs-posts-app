@@ -1,37 +1,43 @@
-import { Body, Controller, HttpException, Post, Request, UseGuards } from '@nestjs/common'
-import { Prisma, User as UserModel } from '@prisma/client'
-import { UserService } from 'src/user/user.service'
-import { LocalAuthGuard } from './local-auth.guard'
+import { BadRequestException, Body, Controller, Post, UseGuards } from '@nestjs/common'
+import { Prisma } from '@prisma/client'
+import { UsersService } from 'src/users/users.service'
 import { AuthService } from './auth.service'
+import { Public } from './decorators/auth.decorator'
+import { SignUpDto } from './dtos/signup.dto'
+import { LocalAuthGuard } from './guards/local-auth.guard'
+import { CurrentUser } from 'src/users/decorators/users.decorator'
+import { ApiTags } from '@nestjs/swagger'
 
-@Controller()
+@ApiTags('auth')
+@Controller('auth')
 export class AuthController {
   constructor(
-    private readonly userService: UserService,
+    private readonly usersService: UsersService,
     private authService: AuthService,
   ) {}
 
+  @Public()
   @Post('signup')
-  async signupUser(@Body() userData: { name?: string; email: string }): Promise<Omit<UserModel, 'password'>> {
+  async signupUser(@Body() data: SignUpDto): Promise<any> {
     try {
-      return await this.userService.createUser(userData)
+      const newUser = await this.usersService.createUser(data)
+
+      const loggedUser = await this.authService.login(newUser)
+
+      return { ...newUser, accesToken: loggedUser.access_token }
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         if (e.code === 'P2002') {
-          throw new HttpException(
-            {
-              message: 'Email already exists',
-            },
-            400,
-          )
+          throw new BadRequestException('Email already exists')
         }
       }
     }
   }
 
+  @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Request() req) {
-    return this.authService.login(req.user)
+  async login(@CurrentUser() user) {
+    return this.authService.login(user)
   }
 }
