@@ -30,19 +30,26 @@ export class UsersService {
     })
   }
 
-  async createUser(data: Prisma.UserCreateInput): Promise<Omit<User, 'password'>> {
-    const { password, ...restBodyData } = data
+  getSessionData(user: User): Pick<User, 'id' | 'email' | 'name'> {
+    const { password, ...publicData } = user
+
+    return publicData
+  }
+
+  async createUser(data: Pick<Prisma.UserCreateInput, 'email' | 'name' | 'password'>) {
+    const { password, email, name } = data
 
     const hash = await bcrypt.hash(password, 10)
 
-    const { password: createdPassword, ...restData } = await this.prisma.user.create({
+    const newUser = await this.prisma.user.create({
       data: {
-        ...restBodyData,
+        email,
+        name,
         password: hash,
       },
     })
 
-    return { ...restData }
+    return newUser
   }
 
   async updateUser(params: { where: Prisma.UserWhereUniqueInput; data: Prisma.UserUpdateInput }): Promise<User> {

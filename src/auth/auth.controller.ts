@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Post, UseGuards } from '@nestjs/common'
+import { BadRequestException, Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 import { UsersService } from 'src/users/users.service'
 import { AuthService } from './auth.service'
@@ -24,7 +24,7 @@ export class AuthController {
 
       const loggedUser = await this.authService.login(newUser)
 
-      return { ...newUser, accesToken: loggedUser.access_token }
+      return loggedUser
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         if (e.code === 'P2002') {
@@ -39,5 +39,10 @@ export class AuthController {
   @Post('login')
   async login(@CurrentUser() user) {
     return this.authService.login(user)
+  }
+
+  @Get('session')
+  async session(@CurrentUser() user) {
+    return this.authService.session(user.id)
   }
 }
