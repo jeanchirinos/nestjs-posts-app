@@ -12,7 +12,7 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, pass: string) {
-    const user = await this.usersService.user({ email })
+    const user = await this.usersService.userWithPassword({ email })
 
     if (!user) {
       throw new BadRequestException('Email or password is incorrect')
@@ -22,7 +22,7 @@ export class AuthService {
 
     if (!isMatch) throw new BadRequestException('Password does not match')
 
-    const sessionData = this.usersService.getSessionData(user)
+    const sessionData = this.usersService.getSession(user)
 
     return sessionData
   }
@@ -30,7 +30,7 @@ export class AuthService {
   async login(user: User) {
     const payload = { email: user.email, id: user.id }
 
-    const sessionData = this.usersService.getSessionData(user)
+    const sessionData = this.usersService.getSession(user)
 
     return {
       access_token: this.jwtService.sign(payload),
@@ -41,7 +41,7 @@ export class AuthService {
   async session(id: number) {
     const user = await this.usersService.user({ id })
 
-    const session = this.usersService.getSessionData(user)
+    const session = this.usersService.getSession(user)
 
     return session
   }
