@@ -27,6 +27,7 @@ export const paginator = (defaultOptions: PaginateOptions): PaginateFunction => 
         skip,
       }),
     ])
+
     const lastPage = Math.ceil(total / perPage)
 
     return {

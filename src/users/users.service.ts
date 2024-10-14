@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/prisma.service'
-import { User, Prisma } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
-import { UserSession } from 'src/auth/types/session'
+import { User, UserWithPassword } from './types/user'
 
 @Injectable()
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async user(userWhereUniqueInput: Prisma.UserWhereUniqueInput): Promise<Omit<User, 'password'> | null> {
+  async user(userWhereUniqueInput: Prisma.UserWhereUniqueInput): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: userWhereUniqueInput,
       omit: {
@@ -17,7 +17,7 @@ export class UsersService {
     })
   }
 
-  async userWithPassword(userWhereUniqueInput: Prisma.UserWhereUniqueInput): Promise<User | null> {
+  async userWithPassword(userWhereUniqueInput: Prisma.UserWhereUniqueInput): Promise<UserWithPassword | null> {
     return this.prisma.user.findUnique({
       where: userWhereUniqueInput,
     })
@@ -31,23 +31,17 @@ export class UsersService {
     orderBy?: Prisma.UserOrderByWithRelationInput
   }): Promise<User[]> {
     const { skip, take, cursor, where, orderBy } = params
+
     return this.prisma.user.findMany({
       skip,
       take,
       cursor,
       where,
       orderBy,
+      omit: {
+        password: true,
+      },
     })
-  }
-
-  getSession(user: User | Omit<User, 'password'>): UserSession {
-    const { email, id, name } = user
-
-    return {
-      email,
-      id,
-      name,
-    }
   }
 
   async createUser(data: Prisma.UserCreateInput) {
@@ -60,6 +54,9 @@ export class UsersService {
         ...otherAttributes,
         password: hash,
       },
+      omit: {
+        password: true,
+      },
     })
 
     return newUser
@@ -71,12 +68,18 @@ export class UsersService {
     return this.prisma.user.update({
       data,
       where,
+      omit: {
+        password: true,
+      },
     })
   }
 
   async deleteUser(where: Prisma.UserWhereUniqueInput): Promise<User> {
     return this.prisma.user.delete({
       where,
+      omit: {
+        password: true,
+      },
     })
   }
 }

@@ -13,10 +13,6 @@ export class UserController {
   async getProfile(@CurrentUser() user: UserSession) {
     const profile = await this.usersService.user({ id: user.id })
 
-    if (!profile) {
-      return null
-    }
-
     return profile
   }
 }

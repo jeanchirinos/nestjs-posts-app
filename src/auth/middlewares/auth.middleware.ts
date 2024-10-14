@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express'
 import * as passport from 'passport'
 
 export function apiKeyMiddleware(req: Request, res: Response, next: NextFunction) {
-  passport.authenticate('headerapikey', value => {
+  passport.authenticate('headerapikey', (value: boolean) => {
     if (value) {
       next()
     } else {

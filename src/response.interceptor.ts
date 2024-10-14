@@ -44,14 +44,13 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, Response<T>> {
 
   responseHandler(res: any, context: ExecutionContext) {
     const ctx = context.switchToHttp()
-    const response = ctx.getResponse()
-    const request = ctx.getRequest()
-    const statusCode = response.statusCode
+    const { statusCode } = ctx.getResponse<{ statusCode: number }>()
+    const { url } = ctx.getRequest<{ url: string }>()
     const message = this.reflector.get<string>(RESPONSE_MESSAGE_METADATA, context.getHandler()) || 'success'
 
     return {
       status: true,
-      path: request.url,
+      path: url,
       message: message,
       statusCode,
       data: res,

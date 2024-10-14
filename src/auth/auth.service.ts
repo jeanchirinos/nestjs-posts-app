@@ -2,7 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { UsersService } from 'src/users/users.service'
 import * as bcrypt from 'bcrypt'
-import { User } from '@prisma/client'
+import { UserSession } from './types/session'
+import { User } from 'src/users/types/user'
 
 @Injectable()
 export class AuthService {
@@ -10,6 +11,16 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
   ) {}
+
+  private getSession(user: User): UserSession {
+    const { email, id, name } = user
+
+    return {
+      email,
+      id,
+      name,
+    }
+  }
 
   async validateUser(email: string, pass: string) {
     const user = await this.usersService.userWithPassword({ email })
@@ -22,15 +33,15 @@ export class AuthService {
 
     if (!isMatch) throw new BadRequestException('Password does not match')
 
-    const sessionData = this.usersService.getSession(user)
+    const sessionData = this.getSession(user)
 
     return sessionData
   }
 
-  async login(user: User) {
+  async login(user: UserSession) {
     const payload = { email: user.email, id: user.id }
 
-    const sessionData = this.usersService.getSession(user)
+    const sessionData = this.getSession(user)
 
     return {
       access_token: this.jwtService.sign(payload),
@@ -41,7 +52,7 @@ export class AuthService {
   async session(id: number) {
     const user = await this.usersService.user({ id })
 
-    const session = this.usersService.getSession(user)
+    const session = this.getSession(user)
 
     return session
   }
