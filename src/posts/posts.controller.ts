@@ -6,6 +6,7 @@ import { IsOwnerGuard } from 'src/auth/guards/is-owner'
 import { CurrentUser } from 'src/users/decorators/users.decorator'
 import { PaginatedResult } from 'src/utils/paginator'
 import { PostsService } from './posts.service'
+import { UserSession } from 'src/auth/types/session'
 
 @ApiTags('posts')
 @Controller()
@@ -26,6 +27,7 @@ export class PostsController {
   async getPostsByUser(
     @Param('userId') userId: number,
     @Query('page') page: number,
+    @CurrentUser() user: UserSession,
   ): Promise<PaginatedResult<PostModel>> {
     return this.postsService.posts({
       where: {

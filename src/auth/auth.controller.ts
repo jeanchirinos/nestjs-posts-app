@@ -22,6 +22,7 @@ export class AuthController {
   async signupUser(@Body() data: SignUpDto) {
     try {
       const newUser = await this.usersService.createUser(data)
+
       const loggedUser = await this.authService.login(newUser)
 
       return loggedUser

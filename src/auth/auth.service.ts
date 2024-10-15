@@ -12,7 +12,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  private getSession(user: User): UserSession {
+  private getSession(user: Pick<User, 'email' | 'id' | 'name'>): UserSession {
     const { email, id, name } = user
 
     return {
@@ -38,14 +38,16 @@ export class AuthService {
     return sessionData
   }
 
-  async login(user: UserSession) {
-    const payload = { email: user.email, id: user.id }
+  async login(user: User | UserSession) {
+    const userSession = this.getSession(user)
 
-    const sessionData = this.getSession(user)
+    const { id, ...userWithoutId } = userSession
+
+    const payload = { sub: id.toString(), ...userWithoutId }
 
     return {
       access_token: this.jwtService.sign(payload),
-      user: sessionData,
+      user,
     }
   }
 

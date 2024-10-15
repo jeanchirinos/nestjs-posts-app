@@ -13,7 +13,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     })
   }
 
-  async validate(payload: { iat: number; exp: number } & Pick<UserSession, 'id' | 'email'>) {
-    return payload
+  async validate(payload: { sub: string; iat: number; exp: number } & Omit<UserSession, 'id'>): Promise<UserSession> {
+    const { exp, iat, sub, ...session } = payload
+
+    return {
+      id: Number(sub),
+      ...session,
+    }
   }
 }
