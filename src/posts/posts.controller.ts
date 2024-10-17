@@ -19,9 +19,10 @@ import { PostsService } from './posts.service'
 import { UserSession } from 'src/auth/types/session'
 import { CreateDraftDto } from './dtos/createdraft.dto'
 import { isOwner } from 'src/utils/isOwner'
+import { ApiKeyAuth } from 'src/auth/decorators/api-key-swagger.decorator'
 
 @ApiTags('posts')
-@ApiSecurity('x-api-key')
+@ApiKeyAuth()
 @Controller()
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}

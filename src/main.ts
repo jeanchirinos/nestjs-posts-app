@@ -5,6 +5,7 @@ import { AllExceptionsFilter } from './all-exceptions.filter'
 import { AppModule } from './app.module'
 import { apiKeyMiddleware } from './auth/middlewares/auth.middleware'
 import { getValidationException } from './utils/getValidationException'
+import { API_KEY_HEADER } from './constants'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -29,7 +30,7 @@ async function bootstrap() {
       .setTitle('Nest js - Simple crud')
       .setDescription('A simple crud application using nest js')
       .setVersion('1.0')
-      .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'x-api-key')
+      .addApiKey({ type: 'apiKey', name: API_KEY_HEADER, in: 'header' }, API_KEY_HEADER)
       .addBearerAuth({ type: 'http', scheme: 'bearer' }, 'bearer')
       .build()
 

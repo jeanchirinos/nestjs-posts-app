@@ -7,7 +7,9 @@ export function apiKeyMiddleware(req: Request, res: Response, next: NextFunction
     if (value) {
       next()
     } else {
-      throw new UnauthorizedException()
+      const objectError = process.env.NODE_ENV === 'development' ? 'API Key is invalid' : undefined
+
+      throw new UnauthorizedException(objectError)
     }
   })(req, res, next)
 }

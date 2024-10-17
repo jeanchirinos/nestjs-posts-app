@@ -1,9 +1,10 @@
-import { BadRequestException, Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
-import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger'
+import { BadRequestException, Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common'
+import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger'
 import { Prisma } from '@prisma/client'
 import { CurrentUser } from 'src/users/decorators/users.decorator'
 import { UsersService } from 'src/users/users.service'
 import { AuthService } from './auth.service'
+import { ApiKeyAuth } from './decorators/api-key-swagger.decorator'
 import { Public } from './decorators/auth.decorator'
 import { LoginDto } from './dtos/login.dto'
 import { SignUpDto } from './dtos/signup.dto'
@@ -11,7 +12,7 @@ import { LocalAuthGuard } from './guards/local-auth.guard'
 import { UserSession } from './types/session'
 
 @ApiTags('auth')
-@ApiSecurity('x-api-key')
+@ApiKeyAuth()
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -40,7 +41,11 @@ export class AuthController {
   @Public()
   @UseGuards(LocalAuthGuard)
   @Post('login')
-  async login(@Body() data: LoginDto, @CurrentUser() user: UserSession) {
+  @HttpCode(200)
+  @ApiBody({
+    type: LoginDto,
+  })
+  async login(@CurrentUser() user: UserSession) {
     const loginData = await this.authService.login(user)
 
     return {
@@ -51,7 +56,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @Get('session')
-  async session(@CurrentUser() user: UserSession) {
+  async session(@CurrentUser() user: UserSession): Promise<UserSession> {
     return this.authService.session(user.id)
   }
 }
