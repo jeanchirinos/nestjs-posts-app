@@ -10,7 +10,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common'
-import { ApiSecurity, ApiTags } from '@nestjs/swagger'
+import { ApiParam, ApiQuery, ApiSecurity, ApiTags } from '@nestjs/swagger'
 import { Post as PostModel } from '@prisma/client'
 import { Public } from 'src/auth/decorators/auth.decorator'
 import { CurrentUser } from 'src/users/decorators/users.decorator'
@@ -26,6 +26,10 @@ import { isOwner } from 'src/utils/isOwner'
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
+  // change default value 'path'
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'order', required: false })
+  @ApiQuery({ name: 'limit', required: false })
   @Public()
   @Get('posts')
   async getPublishedPosts(

@@ -36,7 +36,10 @@ export class AuthService {
     return sessionData
   }
 
-  async login(user: User | UserSession) {
+  async login(user: User | UserSession): Promise<{
+    access_token: string
+    user: UserSession
+  }> {
     const userSession = this.getSession(user)
 
     const { id, ...userWithoutId } = userSession
@@ -49,7 +52,7 @@ export class AuthService {
     }
   }
 
-  async session(id: number) {
+  async session(id: number): Promise<UserSession> {
     const user = await this.usersService.user({ id })
 
     const session = this.getSession(user)
@@ -57,7 +60,7 @@ export class AuthService {
     return session
   }
 
-  validateApiKey(apiKey: string) {
+  validateApiKey(apiKey: string): boolean {
     return process.env.API_KEY === apiKey
   }
 }

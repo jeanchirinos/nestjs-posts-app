@@ -23,21 +23,11 @@ export class UsersService {
     })
   }
 
-  async users(params: {
-    skip?: number
-    take?: number
-    cursor?: Prisma.UserWhereUniqueInput
-    where?: Prisma.UserWhereInput
-    orderBy?: Prisma.UserOrderByWithRelationInput
-  }): Promise<User[]> {
-    const { skip, take, cursor, where, orderBy } = params
+  async users(params: { where?: Prisma.UserWhereInput }): Promise<User[]> {
+    const { where } = params
 
     return this.prisma.user.findMany({
-      skip,
-      take,
-      cursor,
       where,
-      orderBy,
       omit: {
         password: true,
       },
