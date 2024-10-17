@@ -1,8 +1,10 @@
 import { ValidationPipe } from '@nestjs/common'
-import { NestFactory } from '@nestjs/core'
+import { HttpAdapterHost, NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import { AllExceptionsFilter } from './all-exceptions.filter'
 import { AppModule } from './app.module'
 import { apiKeyMiddleware } from './auth/middlewares/auth.middleware'
+import { getValidationException } from './utils/getValidationException'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -11,23 +13,33 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       transform: true,
-      // disableErrorMessages: true,
+      exceptionFactory(errors) {
+        getValidationException(errors)
+      },
     }),
   )
+
+  const { httpAdapter } = app.get(HttpAdapterHost)
+
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapter))
+  app.setGlobalPrefix('v1/api')
 
   const config = new DocumentBuilder()
     .setTitle('Nest js - Simple crud')
     .setDescription('A simple crud application using nest js')
     .setVersion('1.0')
+    .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'x-api-key')
+    .addBearerAuth({ type: 'http', scheme: 'bearer' }, 'bearer')
     .build()
+
+  app.enableCors()
 
   const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup('api-docs', app, document)
 
-  app.enableCors()
-  app.setGlobalPrefix('v1/api')
   app.use(apiKeyMiddleware)
 
   await app.listen(process.env.PORT ?? 3000)
 }
+
 bootstrap()

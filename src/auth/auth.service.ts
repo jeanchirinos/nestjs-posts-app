@@ -1,9 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { UsersService } from 'src/users/users.service'
 import * as bcrypt from 'bcrypt'
-import { UserSession } from './types/session'
 import { User } from 'src/users/types/user'
+import { UsersService } from 'src/users/users.service'
+import { UserSession } from './types/session'
 
 @Injectable()
 export class AuthService {
@@ -22,16 +22,14 @@ export class AuthService {
     }
   }
 
-  async validateUser(email: string, pass: string) {
+  async validateUser(email: string, pass: string): Promise<UserSession | null> {
     const user = await this.usersService.userWithPassword({ email })
 
-    if (!user) {
-      throw new BadRequestException('Email or password is incorrect')
-    }
+    if (!user) return null
 
     const isMatch = await bcrypt.compare(pass, user.password)
 
-    if (!isMatch) throw new BadRequestException('Password does not match')
+    if (!isMatch) return null
 
     const sessionData = this.getSession(user)
 
