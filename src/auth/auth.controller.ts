@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Get, Post, UseGuards } from '@nestjs/common'
-import { ApiSecurity, ApiTags } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger'
 import { Prisma } from '@prisma/client'
 import { CurrentUser } from 'src/users/decorators/users.decorator'
 import { UsersService } from 'src/users/users.service'
@@ -49,7 +49,7 @@ export class AuthController {
     }
   }
 
-  @ApiSecurity('bearer')
+  @ApiBearerAuth()
   @Get('session')
   async session(@CurrentUser() user: UserSession) {
     return this.authService.session(user.id)

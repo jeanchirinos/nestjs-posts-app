@@ -21,13 +21,17 @@ export class PostsService {
   }): Promise<PaginatedResult<Post>> {
     const { where, orderBy, page, limit } = params
 
+    const order: Prisma.PostOrderByWithRelationInput = orderBy ?? {
+      publishedAt: 'desc',
+    }
+
     const paginate: PaginateFunction = paginator({ perPage: limit })
 
     return paginate(
       this.prisma.post,
       {
         where,
-        orderBy,
+        orderBy: order,
       },
       {
         page,

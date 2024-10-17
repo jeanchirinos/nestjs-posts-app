@@ -24,19 +24,21 @@ async function bootstrap() {
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapter))
   app.setGlobalPrefix('v1/api')
 
-  const config = new DocumentBuilder()
-    .setTitle('Nest js - Simple crud')
-    .setDescription('A simple crud application using nest js')
-    .setVersion('1.0')
-    .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'x-api-key')
-    .addBearerAuth({ type: 'http', scheme: 'bearer' }, 'bearer')
-    .build()
+  if (process.env.NODE_ENV === 'development') {
+    const config = new DocumentBuilder()
+      .setTitle('Nest js - Simple crud')
+      .setDescription('A simple crud application using nest js')
+      .setVersion('1.0')
+      .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'x-api-key')
+      .addBearerAuth({ type: 'http', scheme: 'bearer' }, 'bearer')
+      .build()
 
-  app.enableCors()
+    app.enableCors()
 
-  const document = SwaggerModule.createDocument(app, config)
+    const document = SwaggerModule.createDocument(app, config)
 
-  SwaggerModule.setup('api-docs', app, document)
+    SwaggerModule.setup('api-docs', app, document)
+  }
 
   app.use(apiKeyMiddleware)
 

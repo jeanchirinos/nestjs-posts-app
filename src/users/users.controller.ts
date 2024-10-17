@@ -1,12 +1,12 @@
 import { Controller, Get } from '@nestjs/common'
 import { CurrentUser } from './decorators/users.decorator'
 import { UsersService } from './users.service'
-import { ApiSecurity, ApiTags } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger'
 import { UserSession } from 'src/auth/types/session'
 
 @ApiTags('users')
 @Controller('users')
-@ApiSecurity('bearer')
+@ApiSecurity('x-api-key')
 export class UserController {
   constructor(private readonly usersService: UsersService) {}
 
