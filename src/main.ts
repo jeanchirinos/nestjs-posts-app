@@ -4,8 +4,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { AllExceptionsFilter } from './all-exceptions.filter'
 import { AppModule } from './app.module'
 import { apiKeyMiddleware } from './auth/middlewares/auth.middleware'
-import { getValidationException } from './utils/getValidationException'
 import { API_KEY_HEADER } from './constants'
+import { throwValidationException } from './utils/getValidationException'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -15,7 +15,7 @@ async function bootstrap() {
       whitelist: true,
       transform: true,
       exceptionFactory(errors) {
-        getValidationException(errors)
+        throwValidationException(errors)
       },
     }),
   )

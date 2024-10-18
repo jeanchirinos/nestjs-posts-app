@@ -33,9 +33,10 @@ export const paginator = (defaultOptions: PaginateOptions): PaginateFunction => 
     return {
       data,
       meta: {
+        showing: data.length,
         total,
-        lastPage,
         currentPage: page,
+        lastPage,
         perPage,
         prev: page > 1 ? page - 1 : null,
         next: page < lastPage ? page + 1 : null,

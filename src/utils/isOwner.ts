@@ -1,4 +1,4 @@
-import { ForbiddenException, UnauthorizedException } from '@nestjs/common'
+import { ForbiddenException } from '@nestjs/common'
 import { User } from 'src/users/types/user'
 
 type IsOwnerArgs = { currentUserId: User['id']; userId: User['id']; message?: string }

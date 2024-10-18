@@ -10,26 +10,26 @@ import {
   Post,
   Query,
 } from '@nestjs/common'
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiSecurity, ApiTags } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger'
 import { Post as PostModel } from '@prisma/client'
+import { ApiKeyAuth } from 'src/auth/decorators/api-key-swagger.decorator'
 import { Public } from 'src/auth/decorators/auth.decorator'
+import { UserSession } from 'src/auth/types/session'
+import { ResponseMessage } from 'src/response-message.decorator'
 import { CurrentUser } from 'src/users/decorators/users.decorator'
 import { PaginatedResult } from 'src/utils/paginator'
-import { PostsService } from './posts.service'
-import { UserSession } from 'src/auth/types/session'
 import { CreateDraftDto } from './dtos/createdraft.dto'
-import { isOwner } from 'src/utils/isOwner'
-import { ApiKeyAuth } from 'src/auth/decorators/api-key-swagger.decorator'
+import { PostsService } from './posts.service'
 
-@ApiTags('posts')
-@ApiKeyAuth()
 @Controller()
+@ApiKeyAuth()
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Public()
   @Get('posts')
-  @ApiOperation({ summary: 'Get all published posts' })
+  @ApiTags('posts / public')
+  @ApiOperation({ summary: 'Get published posts' })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'order', required: false })
   @ApiQuery({ name: 'limit', required: false })
@@ -52,6 +52,8 @@ export class PostsController {
 
   @Public()
   @Get('posts/:id')
+  @ApiTags('posts / public')
+  @ApiOperation({ summary: 'Get post published by id' })
   async getPostById(@Param('id') id: number): Promise<PostModel> {
     const post = await this.postsService.post({ id, published: true })
 
@@ -62,6 +64,8 @@ export class PostsController {
 
   @Public()
   @Get('posts/search/:searchString')
+  @ApiTags('posts / public')
+  @ApiOperation({ summary: 'Search for posts' })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'order', required: false })
   @ApiQuery({ name: 'limit', required: false })
@@ -95,6 +99,8 @@ export class PostsController {
 
   @Public()
   @Get('user/:userId/posts')
+  @ApiTags('posts / public')
+  @ApiOperation({ summary: 'Get published posts by user' })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'order', required: false })
   @ApiQuery({ name: 'limit', required: false })
@@ -122,13 +128,16 @@ export class PostsController {
   // Auth
   @ApiBearerAuth()
   @Get('user/posts')
+  @ApiTags('posts')
+  @ApiOperation({ summary: `Get user's posts` })
   @ApiQuery({ name: 'page', required: false })
   @ApiQuery({ name: 'order', required: false })
   @ApiQuery({ name: 'limit', required: false })
   @ApiQuery({ name: 'type', required: false, enum: ['published', 'drafts'] })
   async getPostsByUser(
     @CurrentUser() user: UserSession,
-    @Query('page') page?: number,
+    @Query('page')
+    page?: number,
     @Query('order') order?: 'asc' | 'desc',
     @Query('limit') limit?: number,
     @Query('type') type?: 'published' | 'drafts',
@@ -143,29 +152,39 @@ export class PostsController {
         published,
       },
       page,
-      orderBy: {
-        publishedAt: paginationOrder,
-      },
+      orderBy: [
+        {
+          publishedAt: paginationOrder,
+        },
+        { updatedAt: paginationOrder },
+      ],
       limit,
     })
   }
 
   @ApiBearerAuth()
   @Post('posts')
+  @ResponseMessage('Draft created successfully')
+  @ApiTags('posts')
+  @ApiOperation({ summary: 'Create a draft post' })
   async createDraft(@Body() postData: CreateDraftDto, @CurrentUser() user: UserSession): Promise<PostModel> {
     const { title, content } = postData
 
-    return this.postsService.createPost({
+    const newPost = await this.postsService.createPost({
       title,
       content,
       author: {
         connect: { id: user.id },
       },
     })
+
+    return newPost
   }
 
   @ApiBearerAuth()
   @Get('posts/:id/auth')
+  @ApiTags('posts')
+  @ApiOperation({ summary: 'Get post by id' })
   async getPostByIdAuth(@Param('id') id: number, @CurrentUser() user: UserSession): Promise<PostModel> {
     const post = await this.postsService.post({ id, authorId: user.id })
 
@@ -176,8 +195,11 @@ export class PostsController {
 
   @ApiBearerAuth()
   @Patch('posts/publish/:id')
+  @ResponseMessage('Post published successfully')
+  @ApiTags('posts')
+  @ApiOperation({ summary: 'Publish a draft post' })
   async publishPost(@Param('id') id: number, @CurrentUser() user: UserSession): Promise<PostModel> {
-    const post = await this.postsService.post({ id })
+    const post = await this.postsService.post({ id, authorId: user.id })
 
     if (!post) {
       throw new NotFoundException('Post not found')
@@ -187,13 +209,13 @@ export class PostsController {
       throw new InternalServerErrorException('Post is already published')
     }
 
-    isOwner({ currentUserId: user.id, userId: post.authorId, message: 'You do not own this post' })
-
     try {
-      return this.postsService.updatePost({
+      const publishedPost = await this.postsService.updatePost({
         where: { id },
         data: { published: true },
       })
+
+      return publishedPost
     } catch (error) {
       throw new InternalServerErrorException('Failed to publish post')
     }
@@ -201,17 +223,20 @@ export class PostsController {
 
   @ApiBearerAuth()
   @Delete('posts/:id')
+  @ResponseMessage('Post deleted successfully')
+  @ApiTags('posts')
+  @ApiOperation({ summary: 'Delete a post' })
   async deletePost(@Param('id') id: number, @CurrentUser() user: UserSession): Promise<PostModel> {
-    const post = await this.postsService.post({ id })
+    const post = await this.postsService.post({ id, authorId: user.id })
 
     if (!post) {
       throw new NotFoundException('Post not found')
     }
 
-    isOwner({ currentUserId: user.id, userId: post.authorId, message: 'You do not own this post' })
-
     try {
-      return this.postsService.deletePost({ id })
+      const deletedPost = await this.postsService.deletePost({ id })
+
+      return deletedPost
     } catch (error) {
       throw new InternalServerErrorException('Failed to delete post')
     }

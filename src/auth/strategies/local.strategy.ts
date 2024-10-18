@@ -4,7 +4,7 @@ import { plainToClass } from 'class-transformer'
 import { validateSync } from 'class-validator'
 import { Request } from 'express'
 import { Strategy } from 'passport-local'
-import { getValidationException } from 'src/utils/getValidationException'
+import { throwValidationException } from 'src/utils/getValidationException'
 import { AuthService } from '../auth.service'
 import { LoginDto } from '../dtos/login.dto'
 import { UserSession } from '../types/session'
@@ -22,7 +22,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     const errors = validateSync(loginDto)
 
     if (errors.length > 0) {
-      getValidationException(errors)
+      throwValidationException(errors)
     }
 
     super.authenticate(req, options)
