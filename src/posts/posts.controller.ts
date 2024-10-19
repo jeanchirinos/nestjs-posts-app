@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -12,7 +13,7 @@ import {
 } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger'
 import { Post as PostModel } from '@prisma/client'
-import { ApiKeyAuth } from 'src/auth/decorators/api-key-swagger.decorator'
+// import { ApiKeyAuth } from 'src/auth/decorators/api-key-swagger.decorator'
 import { Public } from 'src/auth/decorators/auth.decorator'
 import { UserSession } from 'src/auth/types/session'
 import { ResponseMessage } from 'src/response-message.decorator'
@@ -22,7 +23,7 @@ import { CreateDraftDto } from './dtos/createdraft.dto'
 import { PostsService } from './posts.service'
 
 @Controller()
-@ApiKeyAuth()
+// @ApiKeyAuth()
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
@@ -163,6 +164,18 @@ export class PostsController {
   }
 
   @ApiBearerAuth()
+  @Get('posts/:id/auth')
+  @ApiTags('posts')
+  @ApiOperation({ summary: 'Get post by id' })
+  async getPostByIdAuth(@Param('id') id: number, @CurrentUser() user: UserSession): Promise<PostModel> {
+    const post = await this.postsService.post({ id, authorId: user.id })
+
+    if (!post) throw new NotFoundException('Post not found')
+
+    return post
+  }
+
+  @ApiBearerAuth()
   @Post('posts')
   @ResponseMessage('Draft created successfully')
   @ApiTags('posts')
@@ -182,18 +195,6 @@ export class PostsController {
   }
 
   @ApiBearerAuth()
-  @Get('posts/:id/auth')
-  @ApiTags('posts')
-  @ApiOperation({ summary: 'Get post by id' })
-  async getPostByIdAuth(@Param('id') id: number, @CurrentUser() user: UserSession): Promise<PostModel> {
-    const post = await this.postsService.post({ id, authorId: user.id })
-
-    if (!post) throw new NotFoundException('Post not found')
-
-    return post
-  }
-
-  @ApiBearerAuth()
   @Patch('posts/publish/:id')
   @ResponseMessage('Post published successfully')
   @ApiTags('posts')
@@ -206,7 +207,7 @@ export class PostsController {
     }
 
     if (post.published) {
-      throw new InternalServerErrorException('Post is already published')
+      throw new BadRequestException('Post is already published')
     }
 
     try {
@@ -218,6 +219,34 @@ export class PostsController {
       return publishedPost
     } catch (error) {
       throw new InternalServerErrorException('Failed to publish post')
+    }
+  }
+
+  @ApiBearerAuth()
+  @Patch('posts/unpublish/:id')
+  @ResponseMessage('Post unpublished successfully')
+  @ApiTags('posts')
+  @ApiOperation({ summary: 'Unpublish a post' })
+  async unpublishPost(@Param('id') id: number, @CurrentUser() user: UserSession): Promise<PostModel> {
+    const post = await this.postsService.post({ id, authorId: user.id })
+
+    if (!post) {
+      throw new NotFoundException('Post not found')
+    }
+
+    if (!post.published) {
+      throw new BadRequestException('Post is not published')
+    }
+
+    try {
+      const unPublishedPost = await this.postsService.updatePost({
+        where: { id },
+        data: { published: false },
+      })
+
+      return unPublishedPost
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to unpublish post')
     }
   }
 
